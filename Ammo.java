@@ -20,9 +20,15 @@ public class Ammo {
         this.ammoRad = player.currentAmmoRad;
         this.damage = player.currentAmmoDamage;
         this.velocity = player.currentAmmoSpeed;
-        this.healing = player.playerAmmoHeal;
         this.powerBuff = player.powerBuff;
         this.lifeSteal = player.lifeStealBuff;
+        if(lifeSteal){
+            this.healing = player.playerAmmoHeal;
+        }
+        else{
+            this.healing = player.playerAmmoHeal*0;
+        }
+        
         this.x = player.centerX+magicNo*Math.cos(Math.toRadians(angle))-ammoRad;
         this.y = player.centerY+magicNo*Math.sin(Math.toRadians(angle))-ammoRad;
         

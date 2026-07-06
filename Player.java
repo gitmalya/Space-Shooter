@@ -51,14 +51,14 @@ public class Player {
         spaceShip = new ImageIcon(getClass().getResource("/SpaceGame/images/plane.png")).getImage();
     }
 
-    public void updateAngle(int mouseX, int mouseY) {
+    public void updateAngle(int mouseX, int mouseY){
         double delX = mouseX-centerX;
         double delY = mouseY-centerY;
 
         angle = Math.toDegrees(Math.atan2(delY, delX));
     }
 
-    public void powerBuffStart() {
+    public void powerBuffStart(){
         powerBuff = true;
         buffTime = 0;
         currentAmmoRad = playerAmmoRad*3;

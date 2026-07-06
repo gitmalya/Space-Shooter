@@ -80,7 +80,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     Image instructions;
     Image gameOver;
     Clip blastClip;
-    Clip shootClip;
+    Clip[] shootClip = new Clip[8];
     Clip gameOverClip;
     Clip healClip;
     Clip bossClip;
@@ -103,7 +103,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
 
     
 
-
+        loadAmmoSounds();
         player = new Player((int)panelW,(int)panelH);
         maxPlayerHealth = player.health;
         ammo = new ArrayList<>();
@@ -640,10 +640,12 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     }
 
     public void LifeStealing(int i){
-        if(player.lifeStealBuff){
+        if(ammo.get(i).healing>0){
             player.health += ammo.get(i).healing;
             MaxHealing();
         }
+            
+        
     }
 
     public void MaxHealing(){
@@ -689,14 +691,13 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     }
 
     public void beamSound(){
-        try{ AudioInputStream audio = AudioSystem.getAudioInputStream(getClass().getResource("/SpaceGame/sfx/laser1.wav"));
-            shootClip = AudioSystem.getClip();
-            shootClip.open(audio);
-            shootClip.start();
+        for (Clip clip : shootClip){
+        if (!clip.isRunning()&&clip != null){
+            clip.setFramePosition(0);
+            clip.start();
+            break;
         }
-       catch(Exception e){
-            e.printStackTrace();
-        }
+    }
     }
 
 
@@ -707,6 +708,22 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             healClip.start();
         }
        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    public void loadAmmoSounds(){
+        try{
+            for (int i = 0; i < shootClip.length; i++) {
+            AudioInputStream audio = AudioSystem.getAudioInputStream(getClass().getResource("/SpaceGame/sfx/laser1.wav"));
+
+            shootClip[i] = AudioSystem.getClip();
+            shootClip[i].open(audio);
+            audio.close();
+            }   
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -828,8 +845,11 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             bossClip.setFramePosition(0);
         }
         if(shootClip != null){
-            shootClip.stop();
-            shootClip.setFramePosition(0);
+            for(int i=0;i<shootClip.length;i++){
+                shootClip[i].stop();
+                shootClip[i].setFramePosition(0);
+            }
+            
         }
         if(blastClip != null){
             blastClip.stop();
@@ -1094,6 +1114,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         difficultyCheck = difficultyNo;
         killCount = 0;
         healthBar = MaxHealthBarWidth;
+        loadAmmoSounds();
         player = new Player((int)panelW,(int)panelH);
         ammo = new ArrayList<>();
         enemy = new ArrayList<>();
