@@ -41,6 +41,9 @@ public class ForceField {
         else if(player.superShield&&player.powerBuff){
             g.setPaint(new GradientPaint((float)x,(float)y, Color.RED,(float)(x+radius*2),(float)(y+radius*2),Color.BLUE));
         }
+        else if(player.frostOn){
+            g.setPaint(new GradientPaint((float)x,(float)y, Color.BLUE,(float)(x+radius*2),(float)(y+radius*2),Color.CYAN));
+        }
         else{
             g.setColor(Color.CYAN);
         }

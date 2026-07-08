@@ -14,6 +14,7 @@ public class Ammo {
     double angle;
     boolean powerBuff;
     boolean lifeSteal;
+    boolean frost;
     Ammo(Player player){
         this.player = player;
         this.angle = player.angle;
@@ -22,6 +23,7 @@ public class Ammo {
         this.velocity = player.currentAmmoSpeed;
         this.powerBuff = player.powerBuff;
         this.lifeSteal = player.lifeStealBuff;
+        this.frost = player.frostOn;
         if(lifeSteal){
             this.healing = player.playerAmmoHeal;
         }
@@ -43,6 +45,12 @@ public class Ammo {
         }
         else if(!powerBuff&&lifeSteal){
             g.setColor(Color.GREEN);
+        }
+        else if(frost&&!powerBuff&&!lifeSteal){
+            g.setPaint(new GradientPaint((float)x,(float)y, Color.CYAN,(float)(x+ammoRad*2),(float)(y+ammoRad*2),Color.BLUE));
+        }
+        else if(frost&&!powerBuff&&lifeSteal){
+            g.setPaint(new GradientPaint((float)x,(float)y, Color.CYAN,(float)(x+ammoRad*2),(float)(y+ammoRad*2),Color.GREEN));
         }
         else{
             g.setColor(Color.WHITE);

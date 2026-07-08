@@ -29,8 +29,4 @@ public class GameFrame extends JFrame{
         add(panel);
     }
 
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(()->new GameFrame());
-    }
 }

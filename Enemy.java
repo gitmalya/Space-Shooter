@@ -5,7 +5,8 @@ import java.awt.event.*;
 public class Enemy {
     double x;
     double y;
-    double velocity = 1.5;
+    double spawnVelocity = 1.5;
+    double velocity;
     double vX;
     double vY;
     Image rocket;
@@ -21,16 +22,20 @@ public class Enemy {
     int height = 64;
     int magicAngle = 45;
     int damage = 8;
+    int frostingTime = 0;
+    int frostingDuration = 60;
     Image rocket1;
     Image rocket2;
     Image rocket3;
+    boolean frostOn = false;
     Enemy(Player player,double x,double y,double incHealth,double incSpeed){
         this.player = player;
         this.x = x;
         this.y = y;
         this.MaxHealth += incHealth;
         this.CurrentHealth = MaxHealth;
-        this.velocity += incSpeed;
+        this.spawnVelocity += incSpeed;
+        this.velocity = spawnVelocity;
         rocket1 = new ImageIcon(getClass().getResource("/SpaceGame/images/rocket1.png")).getImage();
         rocket2 = new ImageIcon(getClass().getResource("/SpaceGame/images/rocket2.png")).getImage();
         rocket3 = new ImageIcon(getClass().getResource("/SpaceGame/images/rocket3.png")).getImage();
@@ -54,15 +59,35 @@ public class Enemy {
         else if((double)CurrentHealth/(double)MaxHealth>=0.4){
             rocket = rocket2;
         }
-        else if((double)CurrentHealth/(double)MaxHealth<0.40){
+        else if((double)CurrentHealth/(double)MaxHealth>=0){
             rocket = rocket3;
         }
         g.drawImage(rocket,(int)x,(int)y, null);
         g.setTransform(oldTransform);
     }
 
+    public void FrostStart(){
+        frostOn = true;
+        frostingTime = 0;
+    }
+
+    public void updateFrost(){
+        if(frostOn){
+            frostingTime ++;
+            if(frostingTime >= frostingDuration){
+                frostOn = false;
+                frostingTime = 0;
+            }
+        }
+    }
+
     public void move(){
-        
+        if(frostOn){
+            velocity = spawnVelocity * 0.35; 
+        }
+        else{
+            velocity = spawnVelocity;
+        }
         vX = velocity*Math.cos(Math.toRadians(angle));
         vY = velocity*Math.sin(Math.toRadians(angle));
 

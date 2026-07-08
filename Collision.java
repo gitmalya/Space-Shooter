@@ -32,6 +32,13 @@ public class Collision {
         return bullet.intersects(superShield);
     }
 
+    public static boolean AmmoFrostCollision(Frost frost,Ammo ammo){
+        Rectangle bullet = new Rectangle((int)ammo.x,(int)ammo.y,ammo.ammoRad*2,ammo.ammoRad*2);
+        Rectangle frosts = new Rectangle((int)frost.x+5,(int)frost.y+5,frost.width-10,frost.height-10);
+
+        return bullet.intersects(frosts);
+    }
+
     public static boolean AmmoBufferCollision(AmmoBuff buff,Ammo ammo){
         Rectangle bullet = new Rectangle((int)ammo.x,(int)ammo.y,ammo.ammoRad*2,ammo.ammoRad*2);
         Rectangle buffer = new Rectangle((int)buff.x+5,(int)buff.y+5,buff.width-10,buff.height-10);
@@ -66,6 +73,14 @@ public class Collision {
         Rectangle steal = new Rectangle((int)life.x+5,(int)life.y+5,life.width-10,life.height-10);
 
         return ship.intersects(steal);
+    }
+
+
+    public static boolean PlayerFrostCollision(Frost frost,ForceField field){
+        Rectangle ship = new Rectangle((int)field.x,(int)field.y,field.radius*2,field.radius*2);
+        Rectangle frosts = new Rectangle((int)frost.x+5,(int)frost.y+5,frost.width-10,frost.height-10);
+
+        return ship.intersects(frosts);
     }
 
     public static boolean PlayerSuperShieldCollision(SuperShield shield,ForceField field){

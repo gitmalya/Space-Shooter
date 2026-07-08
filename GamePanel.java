@@ -21,6 +21,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     ArrayList<LifeSteal>lifeSteal;
     ArrayList<Boss> boss;
     ArrayList<SuperShield> superShield;
+    ArrayList<Frost> frosts;
     BossSpawner bossSpawner;
     PlayPause playPause;
     ArrayList<HealDrop> healDrop;
@@ -44,9 +45,11 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     int buffTimer = 0;
     int buffDelay = 1650;
     int lifeStealTimer = 0;
-    int lifeStealDelay = 1380;
+    int lifeStealDelay = 1440;
     int shieldTimer = 0;
     int shieldDelay = 1740;
+    int frostTimer = 0;
+    int frostDelay = 1260;
     int killCount = 0;
     int difficultyNo;
     int difficultyCheck = 15;
@@ -79,7 +82,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     Image backGround;
     Image instructions;
     Image gameOver;
-    Clip blastClip;
+    Clip[] blastClip = new Clip[6];
     Clip[] shootClip = new Clip[8];
     Clip gameOverClip;
     Clip healClip;
@@ -104,6 +107,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     
 
         loadAmmoSounds();
+        loadBlastSounds();
         player = new Player((int)panelW,(int)panelH);
         maxPlayerHealth = player.health;
         ammo = new ArrayList<>();
@@ -118,6 +122,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         bossSpawner = new BossSpawner(player, boss,bossField);
         lifeSteal = new ArrayList<>();
         superShield = new ArrayList<>();
+        frosts = new ArrayList<>();
         moving = new ImageIcon(getClass().getResource("/SpaceGame/images/plane_speed.png")).getImage();
         notMoving = new ImageIcon(getClass().getResource("/SpaceGame/images/plane.png")).getImage();
         backGround = new ImageIcon(getClass().getResource("/SpaceGame/images/SpaceTheme2.png")).getImage();
@@ -139,6 +144,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         addMouseMotionListener(this);
         setFocusable(true);
         setRequestFocusEnabled(true);
+        setBackground(Color.BLACK);
         setOpaque(true);
     }
 
@@ -169,7 +175,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         if(!spaceClicked){
             g.drawImage(instructions, 0, 0,getWidth(),getHeight(), null);
         }
-        if(spaceClicked){
+        else if(spaceClicked){
             g.drawImage(backGround,0,0,getWidth(),getHeight(), null);
             for(Ammo ammos : ammo){
             ammos.draw(g2d);
@@ -192,7 +198,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
 
             g.setColor(Color.RED);
             g.setFont(font);
-            g.drawString("Kill Count : "+killCount,getWidth()-150,25);
+            g.drawString("Kill Count : "+killCount,(int)(0.88*(double)getWidth()),(int)(0.03*(double)getHeight()));
             
 
             difficultyState(g2d);
@@ -226,9 +232,13 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
                 buff.draw(g2d);
             }
 
+            for(Frost frost : frosts){
+                frost.draw(g2d);
+            }
+
 
             if(GameOver){
-                g.drawImage(gameOver, 0,getHeight()-570,getWidth(),260, null);
+                g.drawImage(gameOver, 0,(int)((double)getHeight()*0.33),getWidth(),(int)((double)getHeight()*0.3), null);
             }
             healthState(g2d);
 
@@ -255,6 +265,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             AmmoBuffSpawner();
             LifeStealSpawner();
             SuperShieldSpawner();
+            FrostSpawner();
             bossLevel();
             increaseDifficulty();
             MaxHealing();
@@ -268,6 +279,9 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     public void specialPowerUpsUpdate(){
         player.updatePowerUp();
         field.updateForceField();
+        for(Enemy e : enemy){
+            e.updateFrost();
+        }
     }
 
     public void HealSpawner(){
@@ -322,6 +336,19 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             shieldTimer = 0;
             if(spawning){
                 superShield.add(new SuperShield(maxX,minX, magicHeight,2));
+            }
+            
+        }
+    }
+
+
+    public void FrostSpawner(){
+        frostTimer++;
+        if((frostTimer>=frostDelay)){
+            boolean spawning = rand.nextBoolean();
+            frostTimer = 0;
+            if(spawning){
+                frosts.add(new Frost(maxX,minX, magicHeight,1));
             }
             
         }
@@ -411,6 +438,13 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
                 }
         }
 
+        for(int i=0;i<frosts.size();i++){
+                frosts.get(i).move();
+                if(frosts.get(i).y>powerUpRemoveMaxHeight){
+                    frosts.remove(i);
+                }
+        }
+
         for(int i=0;i<ammoBuffs.size();i++){
                 ammoBuffs.get(i).move();
                 if(ammoBuffs.get(i).y>powerUpRemoveMaxHeight){
@@ -450,6 +484,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             for(int j=0;j<enemy.size();j++){
                 if(Collision.AmmoEnemyCollision(enemy.get(j),ammo.get(i))){
                     LifeStealing(i);
+                    Frosting(i,j);
                     AmmoEnemyDamage(i, j);
                     ammo.remove(i);
                     i--;
@@ -508,6 +543,18 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             }
         }
 
+        for(int i=0;i<ammo.size();i++){
+            for(int j=0;j<frosts.size();j++){
+                if(Collision.AmmoFrostCollision(frosts.get(j),ammo.get(i))){
+                    LifeStealing(i);
+                    AmmoFrostDamage(i, j);
+                    ammo.remove(i);
+                    i--;
+                    break;
+                }
+            }
+        }
+
         for(int i=0;i<enemy.size();i++){
             if(Collision.PlayerEnemyCollision(enemy.get(i),field)){
                 EnemyDamage(i);
@@ -548,6 +595,16 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             if(Collision.PlayerLifeStealCollision(lifeSteal.get(i),field)){
                 player.lifeStealStart();
                 lifeSteal.remove(i);
+                i--;
+                break;
+            }
+        }
+
+
+        for(int i=0;i<frosts.size();i++){
+            if(Collision.PlayerFrostCollision(frosts.get(i),field)){
+                player.frostStart();
+                frosts.remove(i);
                 i--;
                 break;
             }
@@ -639,6 +696,21 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         } 
     }
 
+    public void AmmoFrostDamage(int i,int j){
+        frosts.get(j).health -= ammo.get(i).damage;
+        if(frosts.get(j).health<=0){
+            player.frostStart();
+            frosts.remove(j);
+        } 
+    }
+
+    public void Frosting(int i,int j){
+        if(ammo.get(i).frost){
+            enemy.get(j).FrostStart();
+        }
+        
+    }
+
     public void LifeStealing(int i){
         if(ammo.get(i).healing>0){
             player.health += ammo.get(i).healing;
@@ -692,12 +764,12 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
 
     public void beamSound(){
         for (Clip clip : shootClip){
-        if (!clip.isRunning()&&clip != null){
-            clip.setFramePosition(0);
-            clip.start();
-            break;
+            if (!clip.isRunning()&&clip != null){
+                clip.setFramePosition(0);
+                clip.start();
+                break;
+            }
         }
-    }
     }
 
 
@@ -720,6 +792,22 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
 
             shootClip[i] = AudioSystem.getClip();
             shootClip[i].open(audio);
+            audio.close();
+            }   
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void loadBlastSounds(){
+        try{
+            for (int i = 0; i < blastClip.length; i++) {
+            AudioInputStream audio = AudioSystem.getAudioInputStream(getClass().getResource("/SpaceGame/sfx/blast.wav"));
+
+            blastClip[i] = AudioSystem.getClip();
+            blastClip[i].open(audio);
             audio.close();
             }   
         }
@@ -753,15 +841,13 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
     
     
     public void blastSound(){
-
-        try{ AudioInputStream audio = AudioSystem.getAudioInputStream(getClass().getResource("/SpaceGame/sfx/blast.wav"));
-            blastClip = AudioSystem.getClip();
-            blastClip.open(audio);
-            blastClip.start();
-        }
-       catch(Exception e){
-            e.printStackTrace();
-        }
+    for (Clip clip : blastClip){
+            if (!clip.isRunning()&&clip != null){
+                clip.setFramePosition(0);
+                clip.start();
+                break;
+            }
+            }
     }
 
     public void gameOverSound(){
@@ -852,8 +938,10 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             
         }
         if(blastClip != null){
-            blastClip.stop();
-            blastClip.setFramePosition(0);
+            for(int i=0;i<blastClip.length;i++){
+                blastClip[i].stop();
+                blastClip[i].setFramePosition(0);
+            }
         }
         if(gameOverClip != null){
             gameOverClip.stop();
@@ -878,35 +966,35 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         
         if(killCount/difficultyNo<1){
             g.setColor(new Color(49, 204, 118));
-            g.drawString(Level+"Very Easy",getWidth()-150,45);
+            g.drawString(Level+"Very Easy",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<2){
             g.setColor(new Color(0, 255, 60));
-            g.drawString(Level+"Easy",getWidth()-150,45);
+            g.drawString(Level+"Easy",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<3){
             g.setColor(new Color(242, 255, 0));
-            g.drawString(Level+"Medium",getWidth()-150,45);
+            g.drawString(Level+"Medium",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<4){
             g.setColor(new Color(235, 150, 5));
-            g.drawString(Level+"Hard",getWidth()-150,45);
+            g.drawString(Level+"Hard",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<5){
             g.setColor(new Color(255, 97, 5));
-            g.drawString(Level+"Extreme",getWidth()-150,45);
+            g.drawString(Level+"Extreme",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<6){
             g.setColor(new Color(255, 47, 5));
-            g.drawString(Level+"Insane",getWidth()-150,45);
+            g.drawString(Level+"Insane",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<7){
             g.setColor(new Color(255, 5, 5));
-            g.drawString(Level+"Insane +",getWidth()-150,45);
+            g.drawString(Level+"Insane +",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         else if(killCount/difficultyNo<8){
             g.setColor(Color.RED);
-            g.drawString(Level+"Insane ++",getWidth()-150,45);
+            g.drawString(Level+"Insane ++",(int)(0.88*(double)getWidth()),(int)(0.05*(double)getHeight()));
         }
         g.setFont(font);
     }
@@ -915,9 +1003,9 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         Stroke oldstroke = g.getStroke();
         g.setColor(Color.GRAY);
         g.setStroke(new BasicStroke(4));
-        g.drawRect(10, 12,(int)MaxHealthBarWidth,MaxHealthBarHeight);
+        g.drawRect((int)((double)getWidth()*0.008), (int)((double)getHeight()*0.015),(int)MaxHealthBarWidth,MaxHealthBarHeight);
         g.setColor(Color.DARK_GRAY);
-        g.fillRect(10, 12,(int)MaxHealthBarWidth,MaxHealthBarHeight);
+        g.fillRect((int)((double)getWidth()*0.008),(int)((double)getHeight()*0.015),(int)MaxHealthBarWidth,MaxHealthBarHeight);
         g.setStroke(oldstroke);
 
         if((((double)player.health)/maxPlayerHealth)>=0.90){
@@ -948,7 +1036,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
             g.setColor(Color.RED);
         }
        
-        g.fillRect(10, 12,(int)healthBar,MaxHealthBarHeight);
+        g.fillRect((int)((double)getWidth()*0.008), (int)((double)getHeight()*0.015),(int)healthBar,MaxHealthBarHeight);
     }
 
 
@@ -1100,6 +1188,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         ammoBuffs.clear();
         lifeSteal.clear();
         superShield.clear();
+        frosts.clear();
         newBossAmmoDamage = 0;
         newBossAmmoSpeed = 0;
         newBossHealth = 0;
@@ -1115,6 +1204,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         killCount = 0;
         healthBar = MaxHealthBarWidth;
         loadAmmoSounds();
+        loadBlastSounds();
         player = new Player((int)panelW,(int)panelH);
         ammo = new ArrayList<>();
         enemy = new ArrayList<>();
@@ -1128,6 +1218,7 @@ public class GamePanel extends JPanel implements ActionListener,MouseListener,Mo
         bossSpawner = new BossSpawner(player, boss,bossField);
         ammoBuffs = new ArrayList<>();
         superShield = new ArrayList<>();
+        frosts = new ArrayList<>();
         GameOver = false;
         gamePause = false;
         keyReleased = false;

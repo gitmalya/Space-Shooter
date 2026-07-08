@@ -31,17 +31,20 @@ public class Player {
     boolean lifeStealBuff = false;
     boolean powerBuff = false;
     boolean superShield = false;
+    boolean frostOn = false;
     int buffTime;
     int buffDuration = 300;
     int lifeStealTime;
     int lifeStealDuration = 330;
     int shieldTime;
     int shieldDuration = 120;
+    int frostTime;
+    int frostDuration = 180;
     Player(int panelW,int panelH){
         this.panelH = panelH;
         this.panelW = panelW;
-        this.x = panelW/2 - width;
-        this.y = panelH/2 + 4*height;
+        this.x = panelW/2 - width/2;
+        this.y = panelH/2 + 5*height;
         this.health = maxPlayerHealth;
         this.currentAmmoRad = playerAmmoRad;
         this.currentAmmoDamage = playerAmmoDamage;
@@ -76,6 +79,11 @@ public class Player {
         shieldTime = 0;
     }
 
+    public void frostStart(){
+        frostOn = true;
+        frostTime = 0;
+    }
+
     public void updatePowerUp() {
         if (powerBuff) {
 
@@ -104,6 +112,14 @@ public class Player {
             if(shieldTime >= shieldDuration){
                 superShield = false;
                 shieldTime = 0;
+            }
+        }
+
+        if(frostOn){
+            frostTime ++;
+            if(frostTime >= frostDuration){
+                frostOn = false;
+                frostTime = 0;
             }
         }
     }
